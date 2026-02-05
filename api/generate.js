@@ -1,4 +1,14 @@
 export default async function handler(req, res) {
+  // ✅ CORS headers
+  res.setHeader("Access-Control-Allow-Origin", "*")
+  res.setHeader("Access-Control-Allow-Methods", "POST, OPTIONS")
+  res.setHeader("Access-Control-Allow-Headers", "Content-Type")
+
+  // ✅ Preflight request
+  if (req.method === "OPTIONS") {
+    return res.status(200).end()
+  }
+
   if (req.method !== "POST") {
     return res.status(405).json({ error: "Method not allowed" })
   }
@@ -14,17 +24,17 @@ export default async function handler(req, res) {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
-        "Authorization": `Bearer ${process.env.OPENAI_API_KEY}`,
+        Authorization: `Bearer ${process.env.OPENAI_API_KEY}`,
       },
       body: JSON.stringify({
-        model: "gpt-4o-mini", // ← безопасная модель
+        model: "gpt-4o-mini",
         temperature: 0.2,
         max_tokens: 180,
         messages: [
           {
             role: "system",
             content:
-              "Rewrite messages into calm, neutral, professional workplace responses. Do not add context. Do not add greetings or signatures unless present. Keep it concise.",
+              "Rewrite messages into calm, neutral, professional workplace responses. Do not invent context. Keep it concise. No emojis. No greetings unless implied.",
           },
           {
             role: "user",

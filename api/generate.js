@@ -33,7 +33,7 @@ export default async function handler(req, res) {
         messages: [
           {
             role: "system",
-            content:"`You are a professional communication rewriting assistant.
+            content:`You are a professional communication rewriting assistant.
 
               Goal:
               Rewrite the user's message into a calm, neutral, and professional response suitable for workplace communication.

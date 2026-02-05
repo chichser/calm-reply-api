@@ -1,14 +1,4 @@
 export default async function handler(req, res) {
-  // ✅ CORS headers
-  res.setHeader("Access-Control-Allow-Origin", "*")
-  res.setHeader("Access-Control-Allow-Methods", "POST, OPTIONS")
-  res.setHeader("Access-Control-Allow-Headers", "Content-Type")
-
-  // ✅ Handle preflight request
-  if (req.method === "OPTIONS") {
-    return res.status(200).end()
-  }
-
   if (req.method !== "POST") {
     return res.status(405).json({ error: "Method not allowed" })
   }
@@ -27,53 +17,39 @@ export default async function handler(req, res) {
         "Authorization": `Bearer ${process.env.OPENAI_API_KEY}`,
       },
       body: JSON.stringify({
-        model: "gpt-4o-mini",
+        model: "gpt-4o-mini", // ← безопасная модель
         temperature: 0.2,
         max_tokens: 180,
         messages: [
           {
             role: "system",
-            content: `You are a senior professional communication editor.
-
-Your task is to rewrite messages so they sound calm, clear, and professional in workplace communication.
-
-Rules:
-- Do NOT invent context, intent, or emotions.
-- Do NOT add explanations, comments, or meta text.
-- Do NOT include greetings or sign-offs unless they are explicitly present in the original message.
-- Do NOT apologize unless the original message implies responsibility.
-- Keep the tone firm, calm, and professional.
-- Remove emotional, aggressive, or passive-aggressive language.
-- Keep the response concise.
-
-Output only the rewritten message.`,
+            content:
+              "Rewrite messages into calm, neutral, professional workplace responses. Do not add context. Do not add greetings or signatures unless present. Keep it concise.",
           },
           {
             role: "user",
-            content: `Original message:\n"${text}"\n\nRewrite it according to the rules above.`,
+            content: `Rewrite the following message:\n\n"${text}"`,
           },
         ],
       }),
     })
 
-    const data = await response.json()
-
     if (!response.ok) {
-      console.error("OpenAI error:", data)
-      return res.status(500).json({
-        error: data.error?.message || "OpenAI request failed",
-      })
+      const errorText = await response.text()
+      console.error("OpenAI error:", errorText)
+      return res.status(500).json({ error: "OpenAI API error" })
     }
 
-    const result = data.choices?.[0]?.message?.content
+    const data = await response.json()
+    const result = data?.choices?.[0]?.message?.content
 
     if (!result) {
       return res.status(500).json({ error: "No response from model" })
     }
 
     res.status(200).json({ result })
-  } catch (error) {
-    console.error("Server error:", error)
+  } catch (err) {
+    console.error("Server error:", err)
     res.status(500).json({ error: "Server error" })
   }
 }

@@ -18,33 +18,43 @@ export default async function handler(req, res) {
       },
       body: JSON.stringify({
         model: "gpt-4o-mini",
-        temperature: 0.25,
-        max_tokens: 200,
+        temperature: 0.2,
+        max_tokens: 180,
         messages: [
           {
             role: "system",
-            content: `You are a professional communication assistant.
+            content: `You are a senior professional communication editor.
 
-Your task is to rewrite messages into a calm, neutral, and professional tone suitable for workplace communication.
+Your task is to rewrite messages so they sound calm, clear, and professional in workplace communication.
 
 Rules:
-- Do NOT invent or assume any additional context.
-- Do NOT add information that is not present in the original message.
-- Keep the response concise and clear.
-- Remove emotional language, aggression, or passive aggression.
-- Do NOT add greetings or signatures unless they are clearly implied in the original message.
-- Do NOT include emojis.
-- The output must be ready to send as-is.`,
+- Do NOT invent context, intent, or emotions.
+- Do NOT add explanations, comments, or meta text.
+- Do NOT include greetings or sign-offs unless they are explicitly present in the original message.
+- Do NOT apologize unless the original message implies responsibility.
+- Keep the tone firm, calm, and professional.
+- Remove emotional, aggressive, or passive-aggressive language.
+- Keep the response concise.
+
+Output only the rewritten message.`,
           },
           {
             role: "user",
-            content: `Rewrite the following message:\n\n"${text}"`,
+            content: `Original message:\n"${text}"\n\nRewrite it according to the rules above.`,
           },
         ],
       }),
     })
 
     const data = await response.json()
+
+    // 👇 ВАЖНО: если OpenAI вернул ошибку — покажем её
+    if (!response.ok) {
+      console.error("OpenAI error:", data)
+      return res.status(500).json({
+        error: data.error?.message || "OpenAI request failed",
+      })
+    }
 
     const result = data.choices?.[0]?.message?.content
 
@@ -54,6 +64,7 @@ Rules:
 
     res.status(200).json({ result })
   } catch (error) {
-    res.status(500).json({ error: "Failed to generate response" })
+    console.error("Server error:", error)
+    res.status(500).json({ error: "Server error" })
   }
 }
